@@ -67,7 +67,34 @@ public class SteeringBehavior : MonoBehaviour {
         return 0f;
     }
 
+    public Vector3 flock() {
+        float separationWeight = 0.2f;
+        float coherenceWeight = 0.5f;
+        float veloMatchWeight = 0.3f;
+        Collider[] nearby = Physics.OverlapSphere(agent.position, 3f);
+        Vector3 steering = Vector3.zero;
+        foreach(Collider boid in nearby) {
+            float distance = (agent.position - boid.transform.position).magnitude;
+            Vector3 direction = agent.position - boid.transform.position;
+            steering += separationWeight*direction / (distance * distance);
+        }
+        Vector3 center = Vector3.zero;
+        foreach(Collider boid in nearby) {
+            center += boid.transform.position;
+        }
+        center = center / nearby.Length;
+        Vector3 coherenceDirection = center - agent.position;
+        steering += coherenceDirection * coherenceWeight;
+        Vector3 avgVelo = Vector3.zero;
+        foreach(Collider boid in nearby) {
+            NPCController boidCon = boid.gameObject.GetComponent<NPCController>();
+            avgVelo += boidCon.velocity;
+        }
+        avgVelo = avgVelo / nearby.Length;
+        Vector3 veloDelta = agent.velocity - avgVelo;
+        steering += veloMatchWeight * veloDelta;
+        return steering;
+    }
 
-    // ETC.
 
 }

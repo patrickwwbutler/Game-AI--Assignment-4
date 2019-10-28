@@ -140,20 +140,15 @@ public class FieldMapManager : MonoBehaviour {
                     }
                     break;
                 case 1:
-                    if (Vector3.Distance(spawnedNPCs[1].transform.position, spawnedNPCs[0].transform.position) < 2)
-                    {
-                        narrator.text = "Both the Hunter and Wolf move to another area. Little Red arrives and moves to her house.";
-                        spawnedNPCs[0].GetComponent<NPCController>().label.enabled = false;
-                        spawnedNPCs[0].GetComponent<NPCController>().DestroyPoints();
-                        spawnedNPCs[0].SetActive(false);
-                        spawnedNPCs[1].GetComponent<NPCController>().label.enabled = false;
-                        spawnedNPCs[1].GetComponent<NPCController>().DestroyPoints();
-                        spawnedNPCs[1].SetActive(false);
-                        spawnedNPCs.Add(SpawnItem(spawner3, RedPrefab, null, SpawnText3, 5));
-                        CreatePath();
-                        Invoke("SpawnWolf2", 10);
-                        currentPhase++;
+                    foreach(GameObject npc in spawnedNPCs) {
+                        Destroy(npc);
                     }
+                    spawnedNPCs.Clear();
+                    for(int i = 0; i < 20; i++) {
+                    // spawn the NPCs we'll be using
+                        spawnedNPCs.Add(SpawnItem(spawner1, WolfPrefab, null, SpawnText1, 1));
+                    }
+
                     break;
                 case 2:
                     if (spawnedNPCs.Count > 3 && Vector3.Distance(spawnedNPCs[2].transform.position, spawnedNPCs[3].transform.position) < 12)

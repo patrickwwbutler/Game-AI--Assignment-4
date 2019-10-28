@@ -44,10 +44,9 @@ public class NPCController : MonoBehaviour {
                 if (label) {
                     // replace "First algorithm" with the name of the actual algorithm you're demoing
                     // do this for each phase
-                    label.text = name.Replace("(Clone)","") + "\nAlgorithm: First algorithm"; 
+                    label.text = name.Replace("(Clone)","") + "\nAlgorithm: Flocking"; 
                 }
-                linear = ai.Pursue();   // For example
-                angular = ai.Face();    // For example
+                linear = ai.flock();   // For example
 
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
