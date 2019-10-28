@@ -46,7 +46,8 @@ public class NPCController : MonoBehaviour {
                     // do this for each phase
                     label.text = name.Replace("(Clone)","") + "\nAlgorithm: Flocking"; 
                 }
-                linear = ai.flock();   // For example
+                linear = ai.Arrive();
+                linear = ai.Flock();   // For example
 
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
