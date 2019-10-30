@@ -11,6 +11,9 @@ public class PlayerController : MonoBehaviour {
 
     public float speed;     
     private Rigidbody rb;
+    [Header("Our variables")]
+    public Vector3 position;        // local pointer to the RigidBody's Location vector
+    public Vector3 velocity;        // for getting orientation in flocking (needs velocity)
 
     /// <summary>
     /// Start() is called only once for any GameObject. Here, we want to retrieve
@@ -35,8 +38,11 @@ public class PlayerController : MonoBehaviour {
         // Note that the nose isn't getting correctly aligned. Use your SteeringBehavior to fix that.
         // Change speed on Inspector for "Red"
         // You could instead map this to the mouse if you like.
+       // Vector3 newPos = new Vector3(moveHorizontal, 0, moveVertical);
+       // this.transform.LookAt(newPos + transform.position);
         this.transform.position = new Vector3(transform.position.x + speed * moveHorizontal, 1, transform.position.z + speed * moveVertical);
-
+        
+     
         // This is the physics based movement used in earlier assignments, not needed here.
         // Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
         // rb.AddForce(movement * speed);

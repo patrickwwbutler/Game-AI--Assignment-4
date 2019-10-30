@@ -50,7 +50,9 @@ public class FieldMapManager : MonoBehaviour {
 
     LineRenderer line;                 
     public GameObject[] Path;
-    public Text narrator;                   // 
+    public Text narrator;
+    [Header("our variables")]
+    public int numBoids = 20;
 
     // Use this for initialization. Create any initial NPCs here and store them in the 
     // spawnedNPCs list. You can always add/remove NPCs later on.
@@ -64,8 +66,8 @@ public class FieldMapManager : MonoBehaviour {
         spawnedNPCs = new List<GameObject>();
         spawnedNPCs.Add(SpawnItem(spawner1, HunterPrefab, null, SpawnText1, 4));
         
-        Invoke("SpawnWolf", 12);
-        Invoke("Meeting1", 30);
+       // Invoke("SpawnWolf", 12);
+       // Invoke("Meeting1", 30);
     }
 
     /// <summary>
@@ -100,6 +102,8 @@ public class FieldMapManager : MonoBehaviour {
                     }
                 }
             }
+        } else {
+            previousPhase = currentPhase;
         }
         // Check if a game event had caused a change of phase.
         if (currentPhase == previousPhase)
@@ -144,6 +148,7 @@ public class FieldMapManager : MonoBehaviour {
                         Destroy(npc);
                     }
                     spawnedNPCs.Clear();
+                // todo make the target the player 
                     for(int i = 0; i < 20; i++) {
                     // spawn the NPCs we'll be using
                         spawnedNPCs.Add(SpawnItem(spawner1, WolfPrefab, null, SpawnText1, 1));

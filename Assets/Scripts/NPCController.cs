@@ -25,6 +25,8 @@ public class NPCController : MonoBehaviour {
 
     public Text label;              // Used to displaying text nearby the agent as it moves around
     LineRenderer line;              // Used to draw circles and other things
+    [Header("Our variables")]
+    public bool isLeadBoid = false;
 
     private void Start() {
         ai = GetComponent<SteeringBehavior>();

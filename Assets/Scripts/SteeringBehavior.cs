@@ -44,6 +44,10 @@ public class SteeringBehavior : MonoBehaviour {
 
     public List<GameObject> flock;
 
+    [Header("Our variables")]
+    public bool isLeadSteering = false;
+
+
     protected void Start() {
         agent = GetComponent<NPCController>();
         wanderOrientation = agent.orientation;
