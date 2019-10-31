@@ -53,6 +53,7 @@ public class FieldMapManager : MonoBehaviour {
     public Text narrator;
     [Header("our variables")]
     public int numBoids = 20;
+    public bool CamToPlayer;
 
     // Use this for initialization. Create any initial NPCs here and store them in the 
     // spawnedNPCs list. You can always add/remove NPCs later on.
@@ -148,10 +149,14 @@ public class FieldMapManager : MonoBehaviour {
                         Destroy(npc);
                     }
                     spawnedNPCs.Clear();
+                CamToPlayer = true;
                 // todo make the target the player 
+                PlayerPrefab.GetComponent<NPCController>().isLeadBoid = true;
+                PlayerPrefab.GetComponent<SteeringBehavior>().isLeadSteering = true;
+                spawnedNPCs.Add(PlayerPrefab);
                     for(int i = 0; i < 20; i++) {
                     // spawn the NPCs we'll be using
-                        spawnedNPCs.Add(SpawnItem(spawner1, WolfPrefab, null, SpawnText1, 1));
+                        spawnedNPCs.Add(SpawnItem(spawner1, WolfPrefab, spawnedNPCs[0].GetComponent<NPCController>(), SpawnText1, 1));
                     }
 
                     break;
@@ -254,6 +259,7 @@ public class FieldMapManager : MonoBehaviour {
     /// <returns></returns>
     private GameObject SpawnItem(GameObject spawner, GameObject spawnPrefab, NPCController target, Text spawnText, int phase)
     {
+
         Vector3 size = spawner.transform.localScale;
         Vector3 position = spawner.transform.position + new Vector3(UnityEngine.Random.Range(-size.x / 2, size.x / 2), 0, UnityEngine.Random.Range(-size.z / 2, size.z / 2));
         GameObject temp = Instantiate(spawnPrefab, position, Quaternion.identity);

@@ -26,14 +26,21 @@ public class NPCController : MonoBehaviour {
     public Text label;              // Used to displaying text nearby the agent as it moves around
     LineRenderer line;              // Used to draw circles and other things
     [Header("Our variables")]
-    public bool isLeadBoid = false;
+    public bool isLeadBoid;
+    public PlayerController redLead;
+    public GameObject fieldManager;
 
     private void Start() {
         ai = GetComponent<SteeringBehavior>();
         rb = GetComponent<Rigidbody>();
         line = GetComponent<LineRenderer>();
+        fieldManager = GameObject.FindGameObjectWithTag("gameManager");   
         position = rb.position;
         orientation = transform.eulerAngles.y;
+        redLead = GameObject.FindGameObjectWithTag("Red").GetComponent<PlayerController>();
+       
+        
+ 
     }
 
     /// <summary>
@@ -48,8 +55,8 @@ public class NPCController : MonoBehaviour {
                     // do this for each phase
                     label.text = name.Replace("(Clone)","") + "\nAlgorithm: Flocking"; 
                 }
-                linear = ai.Arrive();
-                linear = ai.Flock();   // For example
+                linear = ai.Arrive() + (0.9f * ai.Flock());
+                //linear = ai.Flock();   // For example
 
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
@@ -70,11 +77,11 @@ public class NPCController : MonoBehaviour {
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
                 break;
-            case 4:
+            case 4: // LEAD BOID (PLAYER)
                 if (label) {
-                    label.text = name.Replace("(Clone)", "") + "\nAlgorithm: Fourth algorithm";
+                    label.text = name.Replace("(Clone)", "") + "\nLead Boid: You";
                 }
-
+                isLeadBoid = true;
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
                 break;
@@ -87,26 +94,36 @@ public class NPCController : MonoBehaviour {
                 // angular = ai.whatever();
                 break;
         }
+        
         update(linear, angular, Time.deltaTime);
+        
+        
         if (label) {
-            label.transform.position = Camera.main.WorldToScreenPoint(this.transform.position);
+          //  label.transform.position = Camera.main.WorldToScreenPoint(this.transform.position);
         }
     }
 
     private void update(Vector3 steeringlin, float steeringang, float time) {
-        // Update the orientation, velocity and rotation
-        orientation += rotation * time;
-        velocity += steeringlin * time;
-        rotation += steeringang * time;
 
-        if (velocity.magnitude > maxSpeed) {
-            velocity.Normalize();
-            velocity *= maxSpeed;
+        if (!isLeadBoid) {
+            // Update the orientation, velocity and rotation
+            orientation += rotation * time;
+            velocity += steeringlin * time;
+            rotation += steeringang * time;
+
+            if (velocity.magnitude > maxSpeed) {
+                velocity.Normalize();
+                velocity *= maxSpeed;
+            }
+
+            rb.AddForce(velocity - rb.velocity, ForceMode.VelocityChange);
+            position = rb.position;
+            rb.MoveRotation(Quaternion.Euler(new Vector3(0, Mathf.Rad2Deg * orientation, 0)));
+        } else {
+            position = redLead.transform.position;
+            //velocity = redLead.GetComponent<PlayerController>().velocity;
         }
-
-        rb.AddForce(velocity - rb.velocity, ForceMode.VelocityChange);
-        position = rb.position;
-        rb.MoveRotation(Quaternion.Euler(new Vector3(0, Mathf.Rad2Deg * orientation, 0)));
+      
     }
 
     // <summary>

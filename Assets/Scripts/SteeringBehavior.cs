@@ -45,12 +45,13 @@ public class SteeringBehavior : MonoBehaviour {
     public List<GameObject> flock;
 
     [Header("Our variables")]
-    public bool isLeadSteering = false;
+    public bool isLeadSteering;
+    float neighbourDistance = 2.0f;
 
 
     protected void Start() {
         agent = GetComponent<NPCController>();
-        wanderOrientation = agent.orientation;
+        if(!isLeadSteering) wanderOrientation = agent.orientation;
     }
 
     public Vector3 Seek() {
@@ -72,7 +73,7 @@ public class SteeringBehavior : MonoBehaviour {
     {
         return 0f;
     }
-
+  
     public Vector3 Arrive() {
 
         // Create the structure to hold our output
@@ -121,16 +122,22 @@ public class SteeringBehavior : MonoBehaviour {
         float veloMatchWeight = 0.3f;
         List<GameObject> nearby = new List<GameObject>();
         foreach(GameObject boid in flock) {
-            if((agent.position - boid.transform.position).magnitude < 3f) {
-                nearby.Add(boid);
+            if( boid != this.gameObject) {
+                if ((agent.position - boid.transform.position).magnitude < 3f) {
+                    nearby.Add(boid);
+                }
             }
+            
         }
         Vector3 steering = Vector3.zero;
         Vector3 separation = Vector3.zero;
         foreach(GameObject boid in nearby) {
-            float distance = (agent.position - boid.transform.position).magnitude;
-            Vector3 direction = agent.position - boid.transform.position;
-            separation += direction / (distance * distance);
+            if(boid != this.gameObject) {
+                float distance = (agent.position - boid.transform.position).magnitude;
+                Vector3 direction = agent.position - boid.transform.position;
+                separation += direction / (distance * distance);
+            }
+
         }
         steering += separation.normalized * separationWeight;
         Vector3 center = Vector3.zero;
@@ -142,15 +149,41 @@ public class SteeringBehavior : MonoBehaviour {
         steering += coherenceDirection.normalized * coherenceWeight;
         Vector3 avgVelo = Vector3.zero;
         foreach(GameObject boid in nearby) {
-            NPCController boidCon = boid.GetComponent<NPCController>();
-            avgVelo += boidCon.velocity;
+            if(boid != this.gameObject) {
+                NPCController boidCon = boid.GetComponent<NPCController>();
+                avgVelo += boidCon.velocity;
+            }
+           
         }
         avgVelo /= nearby.Count;
         Vector3 veloDelta = agent.velocity - avgVelo;
         steering += veloMatchWeight * veloDelta.normalized;
         return steering.normalized * maxAcceleration;
     }
+    /*
+    public void ApplyRules() {
 
+        Vector3 centre = Vector3.zero;
+        Vector3 avoid = Vector3.zero;
+        float flockingSpeed = 0.1f;
+        float dist;
+        int flockSize;
+        foreach (GameObject go in flock) {
+
+            if(go != this.gameObject) {
+                dist = Vector3.Distance(go.transform.position, this.transform.position);
+                if(dist <= neighbourDistance) {
+                    avoid = avoid + (this.transform.position - go.transform.position);
+                }
+                flockingSpeed = flockingSpeed + go.GetComponent<NPCController>().velocity;
+            }
+        }
+
+
+
+
+    }
+    */
 
     public void SetFlock(List<GameObject> flk) {
         flock = flk;
