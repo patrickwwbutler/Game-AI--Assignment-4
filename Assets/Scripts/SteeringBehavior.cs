@@ -46,27 +46,24 @@ public class SteeringBehavior : MonoBehaviour {
 
     [Header("Our variables")]
     public bool isLeadSteering;
-    float neighbourDistance = 3.0f; // min distance other neighbors can be close to flocking agent 
-    float decayCoefficient = 2f; // holds the constant coefficient of decay for the inverse square law force 
+    public float neighbourDistance = 1f; // min distance other neighbors can be close to flocking agent 
+    public float decayCoefficient = 2f; // holds the constant coefficient of decay for the inverse square law force 
+    Vector3 originalPos;
+    Vector3 originalVel;
+    public int counter;
 
     protected void Start() {
         agent = GetComponent<NPCController>();
         if(!isLeadSteering) wanderOrientation = agent.orientation;
+        originalPos = agent.position;
+        originalVel = agent.velocity;
+        counter = 0;
     }
     /* function to set the list of flocking agents for current flocking ageint */
     public void SetFlock(List<GameObject> flk) {
         flock = flk;
-        Debug.Log("this is the flock size: " + flock.Count);
     }
 
-    /*
-    struct Flock {
-
-    Vector3 flockVelocity;
-    float flockOrientation;
-
-    }
-    */
 
     public Vector3 Seek() {
         return new Vector3(0f, 0f, 0f);
@@ -150,34 +147,87 @@ public class SteeringBehavior : MonoBehaviour {
         // output the steering 
         return steering;
     }
-    // TODO 
-    /*
-    public Vector3 avoid_collisions() {
+    // TODO make this work with list of flockmates
+    public Vector3 CollisionPrediction() {
 
+        Vector3 distance = target.position - agent.position;
+        Vector3 veloDiff = target.velocity - agent.velocity;
+        float t_closest = -Vector3.Dot(distance, veloDiff) / Mathf.Pow(veloDiff.magnitude, 2f);
+        if (t_closest < 0) {
+            return Vector3.zero;
+        }
+        Vector3 agentFuture = agent.position + agent.velocity * t_closest;
+        Vector3 targetFuture = target.position + target.velocity * t_closest;
+        if ((agentFuture - targetFuture).magnitude < 1f) {
+            Vector3 evasion = -agent.velocity;
+            agent.DrawCircle(evasion.normalized * maxAcceleration, 0.4f);
+            return evasion.normalized * maxAcceleration;
+        } else {
+            return Vector3.zero;
+        }
+    }
+    public Vector3 avoid_collisions() {
+        // create structure for our output 
+        Vector3 steering;
         // store the first collision time 
         float shortestTime = Mathf.Infinity;
         // store the target that collides then, and other data that we will need and can avoid recalculating 
         NPCController firstTarget = null;
-        float minSeparation = 0;
+        float firstMinSeparation = 0;
         float firstDistance = 0;
+        float distance = 0;
         Vector3 firstRelativePos = Vector3.zero;
         Vector3 firstRelativeVel = Vector3.zero;
+        Vector3 relativePos = Vector3.zero;
+        Vector3 relativeVel = Vector3.zero;
         // loop through each boid
-        foreach(GameObject boid in flock) {
+        foreach (GameObject boid in flock) {
             // only want to avoid collisions with other flockmates 
             if(boid != this.gameObject) {
                 // calculate the time to collision
-                Vector3 relativePos = boid.GetComponent<NPCController>().position - agent.position;
-                Vector3 relativeVel = boid.GetComponent<NPCController>().velocity - agent.velocity;
+                relativePos = boid.GetComponent<NPCController>().position - agent.position;
+                relativeVel = boid.GetComponent<NPCController>().velocity - agent.velocity;
                 float relativeSpeed = relativeVel.magnitude;
-                float timeToCollision = (relativePos)
+                float timeToCollision = (Vector3.Dot(relativePos, relativeVel)) / (relativeSpeed * relativeSpeed);
+                // check if it is going to be a collision at all
+                distance = relativePos.magnitude;
+                float minSeparation = distance - relativeSpeed * shortestTime;
+               // if(minSeparation > 2 * 0.5) {
+                 //   continue;
+               // }
+                // check if it is the shortest 
+                if(timeToCollision > 0 && timeToCollision < shortestTime) {
+                    // store the time, flocker, and other data 
+                    shortestTime = timeToCollision;
+                    firstTarget = boid.GetComponent<NPCController>();
+                    firstMinSeparation = minSeparation;
+                    firstDistance = distance;
+                    firstRelativePos = relativePos;
+                    firstRelativeVel = relativeVel;
+                }
             }
             
         }
+  
+        // if we have no target, then exit 
+        if(firstTarget == null) {
+            return Vector3.zero;
+        }
+        // if we're going to hit exactly, or if we're already colliding, then do the steering based on current position
+        if(firstMinSeparation <= 0 || distance < 2 * 0.5) {
+            relativePos = firstTarget.position - agent.position;
+        } else { // otherwise, calculate the future relative position
+            relativePos = firstRelativePos + firstRelativeVel * shortestTime;
+        }
+        // avoid the target 
+        relativePos.Normalize();
+        steering = relativePos * maxAcceleration;
+        return steering;
 
 
     }
-    */
+    
+
     public Vector3 Flock() {
         float separationWeight = 1f;
         float coherenceWeight = 1f;
@@ -233,11 +283,12 @@ public class SteeringBehavior : MonoBehaviour {
         foreach (GameObject go in flock) {
             if(go != this.gameObject) {
                 // check if the target is close 
-                Vector3 direction = go.transform.position - agent.transform.position;
+                Vector3 direction = agent.position - go.GetComponent<NPCController>().position;
                 float distance = direction.magnitude;
                 if (distance < neighbourDistance) {
                     // calculate the strength of repulsion 
-                    strength += Mathf.Min(decayCoefficient / (distance * distance), maxAcceleration);
+                    strength = maxAcceleration * (neighbourDistance - distance) / neighbourDistance;
+                   
                 }
                 // add the acceleration
                 direction.Normalize();
@@ -272,6 +323,7 @@ public class SteeringBehavior : MonoBehaviour {
 
     }/* function to steer the agent toward the average position of local flockmates */
     public Vector3 computeCohesion() {
+
         
         // Create the structure to hold our output
         Vector3 steering = Vector3.zero;
@@ -279,7 +331,7 @@ public class SteeringBehavior : MonoBehaviour {
         foreach (GameObject go in flock) {
 
             if(go != this.gameObject) {
-                float distance = (agent.position - go.transform.position).magnitude;
+                float distance = (go.GetComponent<NPCController>().position - agent.position).magnitude;
                 if(distance > 0) {
                     steering += go.GetComponent<NPCController>().velocity;
                     count++;
@@ -289,22 +341,39 @@ public class SteeringBehavior : MonoBehaviour {
 
         }
         steering /= count;
-        return steering;
 
+        return steering;
+        
+        /*
+        Vector3 sumPositions = Vector3.zero;
+        foreach (GameObject go in flock) {
+            sumPositions += go.GetComponent<NPCController>().position;
+        }
+        Vector3 average = sumPositions / flock.Count;
+        Vector3 direction = average - agent.position;
+        Vector3 des = direction.normalized * maxSpeed;
+        Vector3 steering = des - agent.velocity;
+        // Check if the acceleration is too fast
+        if (steering.magnitude > maxAcceleration) {
+            steering.Normalize();
+            steering *= maxAcceleration;
+        }
+        return steering;
+        */
     }
     public Vector3 applyRules() {
         // structure to hold our output 
         Vector3 steering = Vector3.zero;
         // get the three behaviors 
         Vector3 separation = computeSeparation();
-        Vector3 alignment = computeAlign();
+        //Vector3 alignment = computeAlign();
         Vector3 cohesion = computeCohesion();
         // assign a weight to each 
-        float separationWeight = 0.7f;
-        float alighWeight = 0.3f;
-        float cohesionWeight = 0.5f;
+        float separationWeight = 1f;
+        //float alighWeight = 0.3f;
+        float cohesionWeight = 1f;
         steering += separation * separationWeight;
-        steering += alignment * alighWeight;
+        //steering += alignment * alighWeight;
         steering += cohesion * cohesionWeight;
         
         if(steering.magnitude > maxAcceleration) {

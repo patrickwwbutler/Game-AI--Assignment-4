@@ -52,8 +52,9 @@ public class FieldMapManager : MonoBehaviour {
     public GameObject[] Path;
     public Text narrator;
     [Header("our variables")]
-    public int numBoids = 20;
+    public int numBoids;
     public bool CamToPlayer;
+    public bool firstClick;
 
     // Use this for initialization. Create any initial NPCs here and store them in the 
     // spawnedNPCs list. You can always add/remove NPCs later on.
@@ -66,7 +67,7 @@ public class FieldMapManager : MonoBehaviour {
 
         spawnedNPCs = new List<GameObject>();
         //spawnedNPCs.Add(SpawnItem(spawner1, HunterPrefab, null, SpawnText1, 4));
-        
+        numBoids = 15;
        // Invoke("SpawnWolf", 12);
        // Invoke("Meeting1", 30);
     }
@@ -79,6 +80,7 @@ public class FieldMapManager : MonoBehaviour {
     private void Update()
     {
         int num;
+        
 
         string inputstring = Input.inputString;
         if (inputstring.Length > 0)
@@ -90,8 +92,21 @@ public class FieldMapManager : MonoBehaviour {
                 DestroyTrees();
                 SpawnTrees(TreeCount);
             }
-            if(inputstring[0] == 'S' && currentPhase == 1) {
-                EnterMapStateOne();
+            // check if the S button has been pressed to either start or restart selected presentation
+            if(inputstring[0] == 'S') {
+                if(currentPhase == 1) {
+                    Restart();
+                    EnterMapStateOne();
+                }
+                if(currentPhase == 2) {
+                    Restart();
+                    EnterMapStateTwo();
+                }
+                if(currentPhase == 3) {
+                    Restart();
+                    EnterMapStateThree();
+                }
+                
             }
 
             // Look for a number key click
@@ -147,58 +162,41 @@ public class FieldMapManager : MonoBehaviour {
                     break;
                 case 2:
                     narrator.text = "Press S to start Part 2: Cone Check and Collision Prediction for Obstacle Avoidance";
-                    // clear original list of spawned NPCs
-                    foreach (GameObject npc in spawnedNPCs) {
-                        Destroy(npc);
-                    }
                     break;
                 case 3:
                     narrator.text = "Press S to start Part 3: Raycasting for Obstacle Avoidance";
-                    // clear original list of spawned NPCs
-                    foreach (GameObject npc in spawnedNPCs) {
-                        Destroy(npc);
-                    }
-                    spawnedNPCs.Clear();
-                    if (inputstring[0] == 'S') {
-                        EnterMapStateThree();
-                    }
                     break;
             }
     }
-
-
-    private void EnterMapStateOne() {
-        
-        // clear original list of spawned NPCs
-        if (spawnedNPCs != null) {
-            foreach (GameObject npc in spawnedNPCs) {
-                npc.SetActive(false);
-            }
-            spawnedNPCs.Clear();
+    /* function that restarts the current presentation */
+    private void Restart() {
+        foreach(GameObject npc in spawnedNPCs) {
+            Destroy(npc);
         }
+        spawnedNPCs.Clear();
+    }
+    private void EnterMapStateOne() {
+        Camera.main.GetComponent<CameraController>().player = PlayerPrefab;
         narrator.text = "In Part 1, we will demonstrate the flocking behavior with a group of 20 agents"
-            + " following a lead boid";
-        // make the lead boid the player 
-        GameObject tempPlayer = PlayerPrefab;
-        tempPlayer.GetComponent<NPCController>().isLeadBoid = true;
-        tempPlayer.GetComponent<SteeringBehavior>().isLeadSteering = true;
-        // add to list of spawnedNPCs
-        spawnedNPCs.Add(PlayerPrefab);
+                       + " following a lead boid";
         // delcare list of new flocking agents 
         List<GameObject> theFlock = new List<GameObject>();
+        // make the lead boid the player 
+        PlayerPrefab.GetComponent<NPCController>().isLeadBoid = true;
+        PlayerPrefab.GetComponent<SteeringBehavior>().isLeadSteering = true;
+        // add to list of spawnedNPCs
+        //spawnedNPCs.Add(tempPlayer);
         // add each boid to the list of spawnedNPCs and to the list of flocking agents 
-        for (int i = 0; i < 20; i++) {
-            GameObject temp = SpawnItem(spawner1, WolfPrefab, spawnedNPCs[0].GetComponent<NPCController>(), SpawnText1, 1);
+        for (int i = 0; i < numBoids; i++) {
+            GameObject temp = SpawnItem(spawner1, WolfPrefab, PlayerPrefab.GetComponent<NPCController>(), SpawnText1, 1);
             spawnedNPCs.Add(temp);
             theFlock.Add(temp);
         }
         // set the list for each agent 
-        for (int i = 1; i < spawnedNPCs.Count; i++) {
-
+        for (int i = 0; i < spawnedNPCs.Count; i++) {
             spawnedNPCs[i].GetComponent<SteeringBehavior>().SetFlock(theFlock);
-
         }
-
+        
     }
 
     private void EnterMapStateTwo()
@@ -243,7 +241,7 @@ public class FieldMapManager : MonoBehaviour {
         }
         temp.GetComponent<NPCController>().label = spawnText;
         temp.GetComponent<NPCController>().phase = phase;
-        Camera.main.GetComponent<CameraController>().player = temp;
+        //Camera.main.GetComponent<CameraController>().player = temp;
         return temp;
     }
 
