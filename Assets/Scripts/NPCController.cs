@@ -55,8 +55,9 @@ public class NPCController : MonoBehaviour {
                     // do this for each phase
                     label.text = name.Replace("(Clone)","") + "\nAlgorithm: Flocking"; 
                 }
-                linear = ai.Arrive() + (0.9f * ai.Flock());
-                //linear = ai.Flock();   // For example
+
+                linear = ai.Pursue() + 0.9f * ai.computeSeparation() + 0.9f * ai.computeCohesion() + ai.computeAlign();
+
 
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
@@ -177,4 +178,5 @@ public class NPCController : MonoBehaviour {
             line.positionCount = 0;
         }
     }
+
 }
