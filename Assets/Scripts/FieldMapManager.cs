@@ -192,7 +192,7 @@ public class FieldMapManager : MonoBehaviour {
             spawnedNPCs.Add(temp);
             theFlock.Add(temp);
         }
-        theFlock.Add(PlayerPrefab);
+       // theFlock.Add(PlayerPrefab); NO 
         // set the list for each agent 
         for (int i = 0; i < spawnedNPCs.Count; i++) {
             spawnedNPCs[i].GetComponent<SteeringBehavior>().SetFlock(theFlock);

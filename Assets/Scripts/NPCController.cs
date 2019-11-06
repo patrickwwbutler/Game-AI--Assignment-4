@@ -56,7 +56,7 @@ public class NPCController : MonoBehaviour {
                     label.text = name.Replace("(Clone)","") + "\nAlgorithm: Flocking"; 
                 }
 
-                linear =  2.5f * ai.Pursue() + 2.5f * ai.computeSeparation() + 0.9f * ai.computeCohesion() + ai.computeAlign();
+                linear =  0.8f * ai.Pursue() + 2f * ai.computeSeparation() + 0.9f * ai.computeCohesion() + 0.9f * ai.computeAlign();
 
 
                 // linear = ai.whatever();  -- replace with the desired calls

@@ -46,7 +46,7 @@ public class SteeringBehavior : MonoBehaviour {
 
     [Header("Our variables")]
     public bool isLeadSteering;
-    public float neighbourDistance = 1f; // min distance other neighbors can be close to flocking agent 
+    public float neighbourDistance = 3f; // min distance other neighbors can be close to flocking agent 
     public float decayCoefficient = 2f; // holds the constant coefficient of decay for the inverse square law force 
     Vector3 originalPos;
     Vector3 originalVel;
@@ -275,20 +275,20 @@ public class SteeringBehavior : MonoBehaviour {
     
     /* function to return a new velocity that steers the agent away from other boids too close */
     public Vector3 computeSeparation() {
-
-        float strength = 0;
+        
         // structure to hold our output 
         Vector3 steering = Vector3.zero;
         // loop through each target (other flockers)
         foreach (GameObject go in flock) {
             if(go != this.gameObject) {
+                float strength = 0;
                 // check if the target is close 
-                Vector3 direction = agent.position - go.GetComponent<NPCController>().position;
+                Vector3 direction = go.GetComponent<NPCController>().position - agent.position;
                 float distance = direction.magnitude;
                 if (distance < neighbourDistance) {
                     // calculate the strength of repulsion 
-                    strength = maxAcceleration * (neighbourDistance - distance) / neighbourDistance;
-                   
+                    // strength = maxAcceleration * (neighbourDistance - distance) / neighbourDistance;
+                    strength = Mathf.Min(1 / (distance * distance), maxAcceleration);
                 }
                 // add the acceleration
                 direction.Normalize();
