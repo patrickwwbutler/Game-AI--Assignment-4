@@ -93,7 +93,7 @@ public class FieldMapManager : MonoBehaviour {
                 SpawnTrees(TreeCount);
             }
             // check if the S button has been pressed to either start or restart selected presentation
-            if(inputstring[0] == 'S') {
+            if(inputstring[0] == 's') {
                 if(currentPhase == 1) {
                     Restart();
                     EnterMapStateOne();
@@ -192,6 +192,7 @@ public class FieldMapManager : MonoBehaviour {
             spawnedNPCs.Add(temp);
             theFlock.Add(temp);
         }
+        theFlock.Add(PlayerPrefab);
         // set the list for each agent 
         for (int i = 0; i < spawnedNPCs.Count; i++) {
             spawnedNPCs[i].GetComponent<SteeringBehavior>().SetFlock(theFlock);
