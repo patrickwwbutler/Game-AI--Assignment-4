@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// MapStateManager is the place to keep a succession of events or "states" when building 
@@ -52,22 +53,27 @@ public class FieldMapManager : MonoBehaviour {
     public GameObject[] Path;
     public Text narrator;
     [Header("our variables")]
+    public static int fromForestNum;
     public int numBoids;
     public bool CamToPlayer;
     public bool firstClick;
+    public GameObject[] pathOne;
+    public GameObject[] pathTwo;
 
     // Use this for initialization. Create any initial NPCs here and store them in the 
     // spawnedNPCs list. You can always add/remove NPCs later on.
 
     void Start() {
-        narrator.text = "This is the place to mention major things going on during the demo, the \"narration.\"";
-
+        // narrator.text = "This is the place to mention major things going on during the demo, the \"narration.\"";
+        narrator.text = "Welcome to our demonstration of complex steering behaviors\n" +
+                        "1 - Part 1\n" +
+                        "2 - Part 2\n" +
+                        "3 - Part 3\n" + "S: Start or Restart Simulation";
         trees = new List<GameObject>();
         SpawnTrees(TreeCount);
 
         spawnedNPCs = new List<GameObject>();
         //spawnedNPCs.Add(SpawnItem(spawner1, HunterPrefab, null, SpawnText1, 4));
-        numBoids = 15;
        // Invoke("SpawnWolf", 12);
        // Invoke("Meeting1", 30);
     }
@@ -93,7 +99,7 @@ public class FieldMapManager : MonoBehaviour {
                 SpawnTrees(TreeCount);
             }
             // check if the S button has been pressed to either start or restart selected presentation
-            if(inputstring[0] == 's') {
+            if(inputstring[0] == 'S') {
                 if(currentPhase == 1) {
                     Restart();
                     EnterMapStateOne();
@@ -161,10 +167,16 @@ public class FieldMapManager : MonoBehaviour {
                     narrator.text = "Press S to start Part 1: Flocking of our simulation.";    
                     break;
                 case 2:
-                    narrator.text = "Press S to start Part 2: Cone Check and Collision Prediction for Obstacle Avoidance";
-                    break;
+                    narrator.text = "In Part 2, we will demonstrate two groups of agents following predefined paths.\n" +
+                                    "Press S to start or restart\n" + "Press C for cone check\n" + "Press P for collision prediction\n";
+                narrator.resizeTextForBestFit = true;
+                narrator.alignment = TextAnchor.UpperLeft;
+                //narrator.text = "Press S to start Part 2: Cone Check and Collision Prediction for Obstacle Avoidance";
+                break;
                 case 3:
-                    narrator.text = "Press S to start Part 3: Raycasting for Obstacle Avoidance";
+                    Restart();
+                    EnterMapStateThree();
+                narrator.text = "Press S to start Part 3: Raycasting for Obstacle Avoidance";
                     break;
             }
     }
@@ -176,9 +188,11 @@ public class FieldMapManager : MonoBehaviour {
         spawnedNPCs.Clear();
     }
     private void EnterMapStateOne() {
-        Camera.main.GetComponent<CameraController>().player = PlayerPrefab;
+
         narrator.text = "In Part 1, we will demonstrate the flocking behavior with a group of 20 agents"
                        + " following a lead boid";
+        PlayerPrefab.SetActive(true);
+        numBoids = 20;
         // delcare list of new flocking agents 
         List<GameObject> theFlock = new List<GameObject>();
         // make the lead boid the player 
@@ -202,17 +216,27 @@ public class FieldMapManager : MonoBehaviour {
 
     private void EnterMapStateTwo()
     {
-        narrator.text = "In Part 2, we will demonstrate two groups of agents following predefined paths.\n"+
-                         "Press C for cone check\n" + "Press P for collision prediction\n" + "Press S to restart";
+        PlayerPrefab.gameObject.SetActive(false);
+        numBoids = 1;
+        for(int i = 0; i < numBoids; i++) {
+            GameObject temp = SpawnItem(spawner1, WolfPrefab, null, SpawnText2, 0);
+            spawnedNPCs.Add(temp);
+        }
+        for(int i = 0; i < numBoids; i++) {
+            spawnedNPCs[i].GetComponent<SteeringBehavior>().setPath(pathOne);
+            spawnedNPCs[i].GetComponent<NPCController>().phase = 2;
+        }
 
-    
+
     }
 
     private void EnterMapStateThree()
     {
-        narrator.text = "Entering Phase Three";
+        ForestMapManager.fromFieldNum = 3;
+        SceneManager.LoadScene("forest", 0);
+        // narrator.text = "Entering Phase Three";
 
-        currentPhase = 2; // or whatever. Won't necessarily advance the phase every time
+        // currentPhase = 2; // or whatever. Won't necessarily advance the phase every time
 
         //spawnedNPCs.Add(SpawnItem(spawner2, WolfPrefab, null, SpawnText2, 4));
     }

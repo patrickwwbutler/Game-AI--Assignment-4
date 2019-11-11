@@ -50,7 +50,8 @@ public class SteeringBehavior : MonoBehaviour {
     public float decayCoefficient = 2f; // holds the constant coefficient of decay for the inverse square law force 
     Vector3 originalPos;
     Vector3 originalVel;
-    public int counter;
+    public int counter; // for testing; had a counter so the calls wouldnt happen too many times and CRASH unity 
+
 
     protected void Start() {
         agent = GetComponent<NPCController>();
@@ -62,6 +63,10 @@ public class SteeringBehavior : MonoBehaviour {
     /* function to set the list of flocking agents for current flocking ageint */
     public void SetFlock(List<GameObject> flk) {
         flock = flk;
+    }
+    public void setPath(GameObject[] path) {
+        Path = path;
+        Debug.Log(Path.Length);
     }
 
 
@@ -185,16 +190,21 @@ public class SteeringBehavior : MonoBehaviour {
             // only want to avoid collisions with other flockmates 
             if(boid != this.gameObject) {
                 // calculate the time to collision
+                // relativePos =  agent.position - boid.GetComponent<NPCController>().position;
+                // relativeVel =  agent.velocity - boid.GetComponent<NPCController>().velocity;
                 relativePos = boid.GetComponent<NPCController>().position - agent.position;
+              //  Debug.Log("rel pos " + relativePos);
                 relativeVel = boid.GetComponent<NPCController>().velocity - agent.velocity;
                 float relativeSpeed = relativeVel.magnitude;
-                float timeToCollision = (Vector3.Dot(relativePos, relativeVel)) / (relativeSpeed * relativeSpeed);
+                Debug.Log("dot prod " + Vector3.Dot(relativePos, relativeVel));
+                float timeToCollision = Vector3.Dot(relativePos, relativeVel) / (relativeSpeed * relativeSpeed);
                 // check if it is going to be a collision at all
                 distance = relativePos.magnitude;
                 float minSeparation = distance - relativeSpeed * shortestTime;
-               // if(minSeparation > 2 * 0.5) {
-                 //   continue;
-               // }
+                if(minSeparation > 2 * 1.5f) {
+                    continue;
+                }
+               // Debug.Log("t to collision !!!! " + timeToCollision);
                 // check if it is the shortest 
                 if(timeToCollision > 0 && timeToCollision < shortestTime) {
                     // store the time, flocker, and other data 
@@ -211,10 +221,11 @@ public class SteeringBehavior : MonoBehaviour {
   
         // if we have no target, then exit 
         if(firstTarget == null) {
+          //  Debug.Log("uh oh");
             return Vector3.zero;
         }
         // if we're going to hit exactly, or if we're already colliding, then do the steering based on current position
-        if(firstMinSeparation <= 0 || distance < 2 * 0.5) {
+        if(firstMinSeparation <= 0 || firstDistance < 2 * 1.5f) {
             relativePos = firstTarget.position - agent.position;
         } else { // otherwise, calculate the future relative position
             relativePos = firstRelativePos + firstRelativeVel * shortestTime;
@@ -288,11 +299,12 @@ public class SteeringBehavior : MonoBehaviour {
                 if (distance < neighbourDistance) {
                     // calculate the strength of repulsion 
                     // strength = maxAcceleration * (neighbourDistance - distance) / neighbourDistance;
-                    strength = Mathf.Min(1 / (distance * distance), maxAcceleration);
-                }
-                // add the acceleration
+                    strength = Mathf.Min(1f / (distance * distance), maxAcceleration);
+                                    // add the acceleration
                 direction.Normalize();
                 steering += strength * direction;
+                }
+
             }
      
         }
@@ -412,8 +424,29 @@ public class SteeringBehavior : MonoBehaviour {
 
     public Vector3 followPath() {
         Vector3 pathTarget = Path[current].transform.position;
+        
+        // get next position in path 
+        Vector3 des = Path[current].transform.position;
+        /*
+        // get distance along path to generate target 
+        Vector3 pathOffset = des - agent.position;
+        // if we are not close enough to position, keep moving 
+        if (pathOffset.sqrMagnitude > 0.4f) {
+            pathOffset.Normalize();
+            pathOffset *= maxAcceleration;
+        } else { // else, get the next position in the path 
+            current++;
+            if(current >= Path.Length) { // the path is complete, reset
+                return Vector3.zero;
+            }
+        }
+        return pathOffset;
+        */
+        // Debug.Log(Path[current].transform.gameObject.name);
+        
         while (Vector3.Distance(agent.position, pathTarget) < 1f) {
             current++;
+            Debug.Log("current" + current);
             if (current > Path.Length) {
                 return Vector3.zero;
             }
@@ -456,6 +489,7 @@ public class SteeringBehavior : MonoBehaviour {
         }
 
         return steering;
+        
     }
 
     public Vector3 stop() {

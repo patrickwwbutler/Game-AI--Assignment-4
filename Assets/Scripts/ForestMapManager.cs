@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// MapStateManager is the place to keep a succession of events or "states" when building 
@@ -46,11 +47,16 @@ public class ForestMapManager : MonoBehaviour {
     private int currentPhase = 0;           // This stores where in the "phases" the game is.
     private int previousPhase = 0;          // The "phases" we were just in
 
+    // our variables 
+    public static int fromFieldNum;
+
     //public int Phase => currentPhase;
 
     LineRenderer line;                 
     public GameObject[] Path;
     public Text narrator;                   // 
+
+
 
     // Use this for initialization. Create any initial NPCs here and store them in the 
     // spawnedNPCs list. You can always add/remove NPCs later on.
@@ -75,32 +81,48 @@ public class ForestMapManager : MonoBehaviour {
     /// </summary>
     private void Update()
     {
-        int num;
+        // if we transitioned from field scene to here, the phase number has been assigned 
+        if(fromFieldNum == 2) { // for part 2 
+            if(fromFieldNum != currentPhase) {
+                previousPhase = currentPhase;
+                currentPhase = fromFieldNum;
+                fromFieldNum = 0; // staying in this scene, all input will now happen here
 
-        string inputstring = Input.inputString;
-        if (inputstring.Length > 0)
-        {
-            Debug.Log(inputstring);
-
-            if (inputstring[0] == 'R')
-            {
-                DestroyTrees();
-                SpawnTrees(TreeCount);
             }
+        }else if(fromFieldNum == 3) { // for part 3 
+            if(fromFieldNum != currentPhase) {
+                previousPhase = currentPhase;
+                currentPhase = fromFieldNum;
+                fromFieldNum = 0; // staying in this scene, all input will now happen here
+            }
+        } else { // else, we were already in the forest scene 
+            int num;
+            string inputstring = Input.inputString;
+            if (inputstring.Length > 0) {
+                Debug.Log(inputstring);
 
-            // Look for a number key click
-            if (inputstring.Length > 0)
-            {
-                if (Int32.TryParse(inputstring, out num))
-                {
-                    if (num != currentPhase)
-                    {
-                        previousPhase = currentPhase;
-                        currentPhase = num;
+                if (inputstring[0] == 'R') {
+                    DestroyTrees();
+                    SpawnTrees(TreeCount);
+                }
+                if (inputstring[0] == 's') {
+                    if (currentPhase == 2) {
+
+                    }
+                }
+
+                // Look for a number key click
+                if (inputstring.Length > 0) {
+                    if (Int32.TryParse(inputstring, out num)) {
+                        if (num != currentPhase) {
+                            previousPhase = currentPhase;
+                            currentPhase = num;
+                        }
                     }
                 }
             }
         }
+
         // Check if a game event had caused a change of phase.
         if (currentPhase == previousPhase)
             return;
@@ -156,15 +178,8 @@ public class ForestMapManager : MonoBehaviour {
                     }
                     break;
                 case 2:
-                    if (spawnedNPCs.Count > 3 && Vector3.Distance(spawnedNPCs[2].transform.position, spawnedNPCs[3].transform.position) < 12)
-                    {
-                        narrator.text = "Little Red notices the Wolf and moves toward it.";
-                        spawnedNPCs[2].GetComponent<SteeringBehavior>().target = spawnedNPCs[3].GetComponent<NPCController>();
-                        SetArrive(spawnedNPCs[2]);
-                        SetArrive(spawnedNPCs[3]);
-                        Invoke("Meeting2", 7);
-                        currentPhase++;
-                    }
+                    fromFieldNum = 0;
+                    
                     break;
                 case 3:
                     if (Vector3.Distance(spawnedNPCs[2].transform.position, house.transform.position) < 12)

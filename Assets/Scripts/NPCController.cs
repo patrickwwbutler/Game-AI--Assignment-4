@@ -29,7 +29,7 @@ public class NPCController : MonoBehaviour {
     public bool isLeadBoid;
     public PlayerController redLead;
     public GameObject fieldManager;
-
+    int count = 0;
     private void Start() {
         ai = GetComponent<SteeringBehavior>();
         rb = GetComponent<Rigidbody>();
@@ -37,7 +37,10 @@ public class NPCController : MonoBehaviour {
         fieldManager = GameObject.FindGameObjectWithTag("gameManager");   
         position = rb.position;
         orientation = transform.eulerAngles.y;
-        redLead = GameObject.FindGameObjectWithTag("Red").GetComponent<PlayerController>();
+        if(phase == 4 || phase == 0) {
+            redLead = GameObject.FindGameObjectWithTag("Red").GetComponent<PlayerController>();
+        }
+        
        
         
  
@@ -49,30 +52,39 @@ public class NPCController : MonoBehaviour {
     /// </summary>
     void FixedUpdate() {
         switch (phase) {
-            case 1:
+            case 0:
+                // nothing, temporary for setting paths
+                break;
+            case 1: // FLOCKING FOR PART 1 
                 if (label) {
                     // replace "First algorithm" with the name of the actual algorithm you're demoing
                     // do this for each phase
                     label.text = name.Replace("(Clone)","") + "\nAlgorithm: Flocking"; 
+                   
                 }
 
-                linear =  0.8f * ai.Pursue() + 2f * ai.computeSeparation() + 0.9f * ai.computeCohesion() + 0.9f * ai.computeAlign();
-
+                linear =  0.8f * ai.Pursue() + 1.5f * ai.computeSeparation() + 1f * ai.computeCohesion() + 0.9f * ai.computeAlign();
+                //linear = 0.5f * ai.Pursue() + ai.avoid_collisions();
+                if(count < 5) {
+                  //  Debug.Log("here is the lin" + linear);
+                }
+                count++;
 
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
                 break;
-            case 2:
+            case 2: // PATH FOLLOWING WITH CONE CHECK/ COLLISION PREDICTION FOR PART 2
                 if (label) {
-                    label.text = name.Replace("(Clone)", "") + "\nAlgorithm: Second algorithm";
+                    label.text = name.Replace("(Clone)", "") + "\n"; // not title for following flockers 
                 }
 
+                linear = 0.8f * ai.followPath();
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
                 break;
-            case 3:
+            case 3: 
                 if (label) {
-                    label.text = name.Replace("(Clone)", "") + "\nAlgorithm: Third algorithm";
+                    label.text = name.Replace("(Clone)", "") + "\n";
                 }
 
                 // linear = ai.whatever();  -- replace with the desired calls
@@ -86,9 +98,9 @@ public class NPCController : MonoBehaviour {
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
                 break;
-            case 5:
+            case 5: // PATH FOLLOWING WITH OBSTACLE AVOIDANCE FOR PART 2: LEAD BOID
                 if (label) {
-                    label.text = name.Replace("(Clone)", "") + "\nAlgorithm: Fifth algorithm";
+                    label.text = name.Replace("(Clone)", "") + "\nLead boid";
                 }
 
                 // linear = ai.whatever();  -- replace with the desired calls
@@ -121,7 +133,10 @@ public class NPCController : MonoBehaviour {
             position = rb.position;
             rb.MoveRotation(Quaternion.Euler(new Vector3(0, Mathf.Rad2Deg * orientation, 0)));
         } else {
-            position = redLead.transform.position;
+            if(redLead != null) {
+                position = redLead.transform.position;
+            }
+
             //velocity = redLead.GetComponent<PlayerController>().velocity;
         }
       
