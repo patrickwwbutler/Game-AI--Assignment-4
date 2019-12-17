@@ -57,8 +57,14 @@ public class FieldMapManager : MonoBehaviour {
     public int numBoids;
     public bool CamToPlayer;
     public bool firstClick;
-    public GameObject[] pathOne;
-    public GameObject[] pathTwo;
+    public GameObject[] pathOne; // first zigzag path 
+    public GameObject[] pathTwo; // second zigzag paths
+    LineRenderer line_2;
+    public GameObject Line2;
+    public GameObject SpawnerP1;
+    public GameObject SpawnerP2;
+    public int numPushed;
+    public bool inPhase;
 
     // Use this for initialization. Create any initial NPCs here and store them in the 
     // spawnedNPCs list. You can always add/remove NPCs later on.
@@ -73,6 +79,8 @@ public class FieldMapManager : MonoBehaviour {
         SpawnTrees(TreeCount);
 
         spawnedNPCs = new List<GameObject>();
+        Line2 = GameObject.Find("Line2");
+
         //spawnedNPCs.Add(SpawnItem(spawner1, HunterPrefab, null, SpawnText1, 4));
        // Invoke("SpawnWolf", 12);
        // Invoke("Meeting1", 30);
@@ -85,6 +93,14 @@ public class FieldMapManager : MonoBehaviour {
     /// </summary>
     private void Update()
     {
+        // if we transitioned from forest scene to here, the phase number has been assigned 
+        if (fromForestNum == 1 || fromForestNum == 2) {
+            if(fromForestNum != currentPhase) {
+                previousPhase = currentPhase;
+                currentPhase = fromForestNum;
+                fromForestNum = 0;
+            }
+        }
         int num;
         
 
@@ -100,7 +116,7 @@ public class FieldMapManager : MonoBehaviour {
             }
             // check if the S button has been pressed to either start or restart selected presentation
             if(inputstring[0] == 'S') {
-                if(currentPhase == 1) {
+                if (currentPhase == 1) {
                     Restart();
                     EnterMapStateOne();
                 }
@@ -114,6 +130,47 @@ public class FieldMapManager : MonoBehaviour {
                 }
                 
             }
+            if(inputstring[0] == 'C' && currentPhase == 2) {
+               // Text coneText = new Text;
+                if (spawnedNPCs.Count != 0) {
+                    for(int i = 0; i < spawnedNPCs.Count; i++) {
+                        // spawnedNPCs[i].GetComponent<NPCController>().label.text;
+                        spawnedNPCs[i].GetComponent<NPCController>().isCollisionPrediction = false;
+                        spawnedNPCs[i].GetComponent<NPCController>().isConeCheck = true;
+                        
+                    }
+                }
+                narrator.text = "In Part 2, we will demonstrate two groups of agents following predefined paths.\n" +
+                                    "Press S to start or restart\n" + "Press C for cone check\n" + "Press P for collision prediction\n" +
+                                    "\n cone check active\n";
+            }
+            if (inputstring[0] == 'P' && currentPhase == 2) {
+                // Text coneText = new Text;
+                if (spawnedNPCs.Count != 0) {
+                    for (int i = 0; i < spawnedNPCs.Count; i++) {
+                        // spawnedNPCs[i].GetComponent<NPCController>().label.text;
+                        spawnedNPCs[i].GetComponent<NPCController>().isConeCheck = false;
+                        spawnedNPCs[i].GetComponent<NPCController>().isCollisionPrediction = true;
+
+                    }
+                }
+                narrator.text = "In Part 2, we will demonstrate two groups of agents following predefined paths.\n" +
+                                    "Press S to start or restart\n" + "Press C for cone check\n" + "Press P for collision prediction\n" +
+                                    "\n collision prediction active\n";
+            }
+            if (inputstring[0] == 'J' && currentPhase == 2) {
+                // Text coneText = new Text;
+                if (spawnedNPCs.Count != 0) {
+                    for (int i = 0; i < spawnedNPCs.Count; i++) {
+                        // spawnedNPCs[i].GetComponent<NPCController>().label.text;
+                        spawnedNPCs[i].GetComponent<NPCController>().isConeCheck = true;
+                        spawnedNPCs[i].GetComponent<NPCController>().isCollisionPrediction = true;
+                    }
+                }
+                narrator.text = "In Part 2, we will demonstrate two groups of agents following predefined paths.\n" +
+                                    "Press S to start or restart\n" + "Press C for cone check\n" + "Press P for collision prediction\n" +
+                                    "\n cone check/collision prediction active\n";
+            }
 
             // Look for a number key click
             if (inputstring.Length > 0)
@@ -122,10 +179,13 @@ public class FieldMapManager : MonoBehaviour {
                 {
                     if (num != currentPhase)
                     {
+                        inPhase = false;
+                        Restart();
                         previousPhase = currentPhase;
                         currentPhase = num;
 
                     }
+                    
                 }
             }
         } else {
@@ -164,11 +224,12 @@ public class FieldMapManager : MonoBehaviour {
                                     "3 - Part 3\n" + "S: Start or Restart Simulation";
                     break;
                 case 1:
-                    narrator.text = "Press S to start Part 1: Flocking of our simulation.";    
+                    if(!inPhase) narrator.text = "Press S to start Part 1: Flocking of our simulation.";    
                     break;
                 case 2:
                     narrator.text = "In Part 2, we will demonstrate two groups of agents following predefined paths.\n" +
-                                    "Press S to start or restart\n" + "Press C for cone check\n" + "Press P for collision prediction\n";
+                                    "Press S to start or restart\n" + "Press C for cone check\n" + "Press P for collision prediction\n" + 
+                                    "Press J for Cone check and Collision Prediction";
                 narrator.resizeTextForBestFit = true;
                 narrator.alignment = TextAnchor.UpperLeft;
                 //narrator.text = "Press S to start Part 2: Cone Check and Collision Prediction for Obstacle Avoidance";
@@ -176,7 +237,7 @@ public class FieldMapManager : MonoBehaviour {
                 case 3:
                     Restart();
                     EnterMapStateThree();
-                narrator.text = "Press S to start Part 3: Raycasting for Obstacle Avoidance";
+               // narrator.text = "Press S to start Part 3: Raycasting for Obstacle Avoidance";
                     break;
             }
     }
@@ -186,9 +247,12 @@ public class FieldMapManager : MonoBehaviour {
             Destroy(npc);
         }
         spawnedNPCs.Clear();
+        ClearPaths();
+       // line.positionCount = 0;
+        //line_2.positionCount = 0;
     }
     private void EnterMapStateOne() {
-
+        inPhase = true;
         narrator.text = "In Part 1, we will demonstrate the flocking behavior with a group of 20 agents"
                        + " following a lead boid";
         PlayerPrefab.SetActive(true);
@@ -209,6 +273,7 @@ public class FieldMapManager : MonoBehaviour {
        // theFlock.Add(PlayerPrefab); NO 
         // set the list for each agent 
         for (int i = 0; i < spawnedNPCs.Count; i++) {
+            spawnedNPCs[i].GetComponent<SteeringBehavior>().neighbourDistance = 3f;
             spawnedNPCs[i].GetComponent<SteeringBehavior>().SetFlock(theFlock);
         }
         
@@ -217,14 +282,45 @@ public class FieldMapManager : MonoBehaviour {
     private void EnterMapStateTwo()
     {
         PlayerPrefab.gameObject.SetActive(false);
-        numBoids = 1;
-        for(int i = 0; i < numBoids; i++) {
-            GameObject temp = SpawnItem(spawner1, WolfPrefab, null, SpawnText2, 0);
-            spawnedNPCs.Add(temp);
+        CreatePath();
+        numBoids = 12;
+
+        // add all flockers to list of spawned npcs 
+        for (int i = 0; i < numBoids; i++) {
+            GameObject temp;
+            if(i > 5) { // for the second list of flockers, spawn in different place (Spawner 2)
+                temp = SpawnItem(SpawnerP2, WolfPrefab, null, SpawnText2, 0);
+            } else {
+                temp = SpawnItem(SpawnerP1, WolfPrefab, null, SpawnText2, 0); // spawn in (Spawner 1)
+            }
+            spawnedNPCs.Add(temp); // add to list 
         }
-        for(int i = 0; i < numBoids; i++) {
+        // initialize two lists of flockers 
+        List<GameObject> flock1 = new List<GameObject>();
+        List<GameObject> flock2 = new List<GameObject>();
+        // make the first group follow the path of the first lead boid and path one 
+        for (int i = 0; i < 6; i++) {
+            spawnedNPCs[i].GetComponent<SteeringBehavior>().follower = spawnedNPCs[0].GetComponent<SteeringBehavior>().agent;
             spawnedNPCs[i].GetComponent<SteeringBehavior>().setPath(pathOne);
             spawnedNPCs[i].GetComponent<NPCController>().phase = 2;
+            flock1.Add(spawnedNPCs[i]);
+        }
+        // make the second group follow the path of the second lead boid and path two 
+        for(int i = 6; i < numBoids; i++) {
+            spawnedNPCs[i].GetComponent<SteeringBehavior>().follower = spawnedNPCs[6].GetComponent<SteeringBehavior>().agent;
+            spawnedNPCs[i].GetComponent<SteeringBehavior>().setPath(pathTwo);
+            spawnedNPCs[i].GetComponent<NPCController>().phase = 2;
+            spawnedNPCs[i].GetComponent<MeshRenderer>().material.SetColor("_Color", Color.white);
+            flock2.Add(spawnedNPCs[i]);
+        }
+        // set flocks to avoid for both 
+        for(int i = 0; i < flock1.Count; i++) {
+            // first flock avoids second flock 
+            flock1[i].GetComponent<SteeringBehavior>().SetFlock(flock1);
+            flock1[i].GetComponent<SteeringBehavior>().SetOtherFlock(flock2);
+            // second flock avoids first flock 
+            flock2[i].GetComponent<SteeringBehavior>().SetFlock(flock2);
+            flock2[i].GetComponent<SteeringBehavior>().SetOtherFlock(flock1);
         }
 
 
@@ -363,12 +459,35 @@ public class FieldMapManager : MonoBehaviour {
 
     private void CreatePath()
     {
+        Color red =  Color.red;
+        Color blue = Color.blue;
+        // create the first path 
         line = GetComponent<LineRenderer>();
-        line.positionCount = Path.Length;
-        for (int i = 0; i < Path.Length; i++)
+        // set its color to red 
+        line.material = new Material(Shader.Find("Sprites/Default"));
+        line.startColor = red;
+        line.endColor = red;
+        line.positionCount = pathOne.Length;
+        for (int i = 0; i < pathOne.Length; i++)
         {
-            line.SetPosition(i, Path[i].transform.position);
+            line.SetPosition(i, pathOne[i].transform.position);
         }
+        // create the second path 
+        line_2 = Line2.GetComponent<LineRenderer>(); 
+        // set its color to blue 
+        line_2.material = new Material(Shader.Find("Sprites/Default"));
+        line_2.startColor = blue;
+        line_2.endColor = blue;
+        line_2.positionCount = pathTwo.Length;
+        for(int i = 0; i < pathTwo.Length; i++) {
+            line_2.SetPosition(i, pathTwo[i].transform.position);
+        }
+    }
+    private void ClearPaths() {
+        line = GetComponent<LineRenderer>();
+        line.positionCount = 0;
+        line_2 = Line2.GetComponent<LineRenderer>();
+        line_2.positionCount = 0;
     }
 
     void OnDrawGizmosSelected() {

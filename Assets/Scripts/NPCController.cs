@@ -26,10 +26,13 @@ public class NPCController : MonoBehaviour {
     public Text label;              // Used to displaying text nearby the agent as it moves around
     LineRenderer line;              // Used to draw circles and other things
     [Header("Our variables")]
-    public bool isLeadBoid;
+    public bool isLeadBoid; // for when the player is the lead boid 
     public PlayerController redLead;
     public GameObject fieldManager;
+    public bool isConeCheck;
+    public bool isCollisionPrediction;
     int count = 0;
+    public bool pathBoidLeader; // for path following, all other boids will follow leader 
     private void Start() {
         ai = GetComponent<SteeringBehavior>();
         rb = GetComponent<Rigidbody>();
@@ -62,13 +65,15 @@ public class NPCController : MonoBehaviour {
                     label.text = name.Replace("(Clone)","") + "\nAlgorithm: Flocking"; 
                    
                 }
+                // give each behavior (pursue, separation, cohesion, and alignment) a different weight and add up for the linear
+                linear =  0.8f * ai.Pursue() + 10f * ai.computeSeparation()  + 0.2f * ai.computeCohesion() + 0.4f * ai.computeAlign().linear;               
+                angular = ai.Face() + 0.7f * ai.computeAlign().angular;
+                // will be facing character and direction of average velocity, so draw circle to show where facing 
+                DrawCircle(this.position + this.transform.forward * 1.7f, 0.5f);
 
-                linear =  0.8f * ai.Pursue() + 1.5f * ai.computeSeparation() + 1f * ai.computeCohesion() + 0.9f * ai.computeAlign();
                 //linear = 0.5f * ai.Pursue() + ai.avoid_collisions();
-                if(count < 5) {
-                  //  Debug.Log("here is the lin" + linear);
-                }
-                count++;
+              
+                //count++;
 
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
@@ -77,20 +82,48 @@ public class NPCController : MonoBehaviour {
                 if (label) {
                     label.text = name.Replace("(Clone)", "") + "\n"; // not title for following flockers 
                 }
-
-                linear = 0.8f * ai.followPath();
+                linear = ai.followPath().linear * 0.7f + 5f * ai.computeSeparation() + 0.5f * ai.computeCohesion() + 0.25f * ai.computeAlign().linear;
+                
+                angular = ai.followPath().angular + ai.computeAlign().angular;
+                // doing cone check only
+                if (isConeCheck && !isCollisionPrediction && ai.ConeCheck() != Vector3.zero) {
+                    linear = ai.ConeCheck() + 1f * ai.computeSeparation() + 0.2f * ai.computeAlign().linear + 0.1f * ai.computeCohesion();
+                }
+                // doing collision prediction only 
+                if(isCollisionPrediction && !isConeCheck && ai.CollisionPrediction() != Vector3.zero) {
+                    linear = ai.CollisionPrediction() + 0.95f * ai.followPath().linear + 5f * ai.computeSeparation() + 0.6f * ai.computeCohesion() + 0.2f * ai.computeAlign().linear;
+                }
+                // doing both 
+                if(isConeCheck && isCollisionPrediction) {
+                    if(ai.CollisionPrediction() != Vector3.zero && ai.ConeCheck() != Vector3.zero) {
+                        linear = 0.7f * ai.CollisionPrediction() + ai.followPath().linear + 6f * ai.computeSeparation() + 
+                                 0.5f * ai.computeCohesion() + 0.2f * ai.computeAlign().linear + ai.ConeCheck();
+                    } else {
+                        if (ai.CollisionPrediction() != Vector3.zero) {
+                            linear = ai.CollisionPrediction() + 0.9f * ai.followPath().linear + 5f * ai.computeSeparation() + 0.5f * ai.computeCohesion() + 0.2f * ai.computeAlign().linear;
+                        }
+                        if (ai.ConeCheck() != Vector3.zero) {
+                            linear = ai.ConeCheck() + 1f * ai.computeSeparation() + 0.2f * ai.computeAlign().linear;
+                        }
+                    }
+                    
+                }
+                
+                
+                 
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
                 break;
-            case 3: 
+            case 3: // PATH FOLLOWING WITH OBSTACLE AVOIDANCE FOR PART 3: LEAD BOID
                 if (label) {
                     label.text = name.Replace("(Clone)", "") + "\n";
                 }
+                
 
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
                 break;
-            case 4: // LEAD BOID (PLAYER)
+            case 4: // LEAD BOID FOR PART 1 (PLAYER)
                 if (label) {
                     label.text = name.Replace("(Clone)", "") + "\nLead Boid: You";
                 }
@@ -98,11 +131,15 @@ public class NPCController : MonoBehaviour {
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
                 break;
-            case 5: // PATH FOLLOWING WITH OBSTACLE AVOIDANCE FOR PART 2: LEAD BOID
+            case 5: // PATH FOLLOWING WITH OBSTACLE AVOIDANCE FOR PART 3: FOLLOWING FLOCKERS
                 if (label) {
                     label.text = name.Replace("(Clone)", "") + "\nLead boid";
                 }
-
+                linear = ai.followAndRaycast().linear;
+                angular = ai.followAndRaycast().angular;
+                DrawCircle(this.position + transform.forward * 1.7f, 0.5f);
+                // will be facing character and direction of average velocity, so draw circle to show where facing 
+                //DrawCircle(this.position + (ai.followAndRaycast().linear + 0.9f * ai.computeAlign().linear), 0.75f);
                 // linear = ai.whatever();  -- replace with the desired calls
                 // angular = ai.whatever();
                 break;
@@ -112,11 +149,11 @@ public class NPCController : MonoBehaviour {
         
         
         if (label) {
-          //  label.transform.position = Camera.main.WorldToScreenPoint(this.transform.position);
+            label.transform.position = Camera.main.WorldToScreenPoint(this.transform.position);
         }
     }
 
-    private void update(Vector3 steeringlin, float steeringang, float time) {
+    public void update(Vector3 steeringlin, float steeringang, float time) {
 
         if (!isLeadBoid) {
             // Update the orientation, velocity and rotation

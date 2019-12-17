@@ -1,0 +1,44 @@
+README
+Jessica Lichter, Patrick Butler
+~ Improvements ~
+Jessica Lichter
+1.   For part 1, the weights in my steering behavior were 0.8 for pursuing,
+10 for separation, 0.2 for cohesion, and 0.4 for alignment. Originally
+I wanted to have the weights add up to 1 but, after tinkering with the original
+flocking, the heavy separation looked much nicer. The angular weights are 0.7 for aligning
+with the flock and 1 for facing the lead boid they are pursuing. 
+
+2.   Part 2 was a bit more difficult. the first runthrough (in terms of flocking) 
+was better, and i may tinker with it more in the future to get better results. But since i spent
+so much time on the weights, i was hesitant to change the behavior to be more like part 3.
+     In this part, I used the collision prediction algorithm from the book to do the Collision 
+Prediction (P button) part of the path following. For the cone check, i did the cone check algorithm
+from the textbook and incorporated the dynamic evasion algorithm. All the path followers flock and 
+use the cohesion, alignment, and separation algorithms. 
+     If nothing is active, the the flockers path follow with a weight of 0.7 for path following, 
+5 for separation, 0.5 for cohesion, and 0.25 for alignment. The angular is an even weight of 1 for 
+path following and aligning. 
+     If there is a collision detection with cone check only, the weight is 1 
+for cone check, 1 fo separation, 02 for alignment, and 0.1 for cohesion. 
+     If there is just collision prediction,the weights are 1 for collision prediction, 0.95 for 
+path following, 5 for separation, 0.6 for cohesion,and 0.2 for alignment. This required a greater 
+separation and cohesion weight because collision prediction had a bigger impact on the linear, causing 
+the flock to easily fly away and bump into each other. 
+     If both were active,the weights are 0.7 for collision prediction, 1 for path following, 6 for separation, 
+0.5 for cohesion, 0.2 for alignment,and 1 for cone check. If cone check was not detected, the weights were 
+0.9 for path following, 5 for separation, 0.5 for cohesion,and 0.2 for alignment. If the collision prediction 
+was not detected, the weights were 1 for cone check, 1 for separation, and 0.2 or alignment.
+
+3.   For part 3, i used 3 rays, tinkering around with the angles. In straight ahead in the direction of the 
+agents alignment, one at a 30 degree angle (35 for following flcokers) to the left of the agent's alignment,
+and one at a 30 degree angle (35 for following flockers) to the right of the agent's alignment. This would 
+allow for the agent to avoid straight collisions and, when turning around corners, to steer to a new direction
+that would avoid awkward bumping and allow the agent to detect collisions at a slight angle.
+
+~ Known Bugs ~
+Part 2: flocking is a bit finnicky. flockers seem to separate more when near path points towards the wall.
+Part 3: some runs look amazing, others ... not so much. will probably have to redesign behavior blending, weights,
+and components of the algorithms for this and part 2.
+
+I tried to keep the code commented and somewhat organized, sorry if its a bit messy. I put a lot of time and energy
+into this and am willing to improve it more! - Jessie 

@@ -9,6 +9,7 @@ TagManager:
   - Red
   - Spawner
   - gameManager
+  - obstacle
   layers:
   - Default
   - TransparentFX

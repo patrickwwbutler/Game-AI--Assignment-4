@@ -38,7 +38,8 @@ public class ForestMapManager : MonoBehaviour {
     public Text SpawnText2;
     public GameObject spawner3;
     public Text SpawnText3;
-
+    public GameObject spawner4; // where lead boid spawns for part 3
+    public GameObject spawner5; // where following boids spawn for part 3
     public int TreeCount;
  
     private List<GameObject> spawnedNPCs;   // When you need to iterate over a number of agents.
@@ -55,6 +56,9 @@ public class ForestMapManager : MonoBehaviour {
     LineRenderer line;                 
     public GameObject[] Path;
     public Text narrator;                   // 
+    /*     our vars     */
+    int numBoids;
+    public bool inPhase;
 
 
 
@@ -62,16 +66,20 @@ public class ForestMapManager : MonoBehaviour {
     // spawnedNPCs list. You can always add/remove NPCs later on.
 
     void Start() {
-        narrator.text = "This is the place to mention major things going on during the demo, the \"narration.\"";
-
+        // narrator.text = "This is the place to mention major things going on during the demo, the \"narration.\"";
+        narrator.text = "Welcome to our demonstration of complex steering behaviors\n" +
+                         "1 - Part 1\n" +
+                         "2 - Part 2\n" +
+                         "3 - Part 3\n" + "S: Start or Restart Simulation";
+        narrator.resizeTextForBestFit = true;
         trees = new List<GameObject>();
         SpawnTrees(TreeCount);
 
         spawnedNPCs = new List<GameObject>();
-        spawnedNPCs.Add(SpawnItem(spawner1, HunterPrefab, null, SpawnText1, 4));
+     //   spawnedNPCs.Add(SpawnItem(spawner1, HunterPrefab, null, SpawnText1, 4));
         
-        Invoke("SpawnWolf", 12);
-        Invoke("Meeting1", 30);
+     //   Invoke("SpawnWolf", 12);
+      //  Invoke("Meeting1", 30);
     }
 
     /// <summary>
@@ -81,15 +89,8 @@ public class ForestMapManager : MonoBehaviour {
     /// </summary>
     private void Update()
     {
-        // if we transitioned from field scene to here, the phase number has been assigned 
-        if(fromFieldNum == 2) { // for part 2 
-            if(fromFieldNum != currentPhase) {
-                previousPhase = currentPhase;
-                currentPhase = fromFieldNum;
-                fromFieldNum = 0; // staying in this scene, all input will now happen here
-
-            }
-        }else if(fromFieldNum == 3) { // for part 3 
+        // if we transitioned from field scene to here, the phase number has been assigned  
+        if (fromFieldNum == 3) { // for part 3 
             if(fromFieldNum != currentPhase) {
                 previousPhase = currentPhase;
                 currentPhase = fromFieldNum;
@@ -105,10 +106,13 @@ public class ForestMapManager : MonoBehaviour {
                     DestroyTrees();
                     SpawnTrees(TreeCount);
                 }
-                if (inputstring[0] == 's') {
-                    if (currentPhase == 2) {
-
+                if (inputstring[0] == 'S') {
+                    if (currentPhase == 3) {
+                        narrator.text = "";
+                        Restart(); 
+                        EnterMapStateThree();
                     }
+                   // if(currentPhase)
                 }
 
                 // Look for a number key click
@@ -151,6 +155,7 @@ public class ForestMapManager : MonoBehaviour {
         switch (currentPhase)
             {
                 case 0:
+                /*
                     if (spawnedNPCs.Count > 1 && Vector3.Distance(spawnedNPCs[1].transform.position, spawnedNPCs[0].transform.position) < 12)
                     {
                         narrator.text = "The Hunter spots the wolf and believes it is his target. The Wolf runs.";
@@ -160,9 +165,14 @@ public class ForestMapManager : MonoBehaviour {
                         spawnedNPCs[1].GetComponent<NPCController>().phase = 2;
                         currentPhase++;
                     }
+                */
                     break;
-                case 1:
-                    if (Vector3.Distance(spawnedNPCs[1].transform.position, spawnedNPCs[0].transform.position) < 2)
+                case 1: //todo
+                fromFieldNum = 0;
+                EnterMapStateOne();
+                    
+                /*
+                if (Vector3.Distance(spawnedNPCs[1].transform.position, spawnedNPCs[0].transform.position) < 2)
                     {
                         narrator.text = "Both the Hunter and Wolf move to another area. Little Red arrives and moves to her house.";
                         spawnedNPCs[0].GetComponent<NPCController>().label.enabled = false;
@@ -176,52 +186,39 @@ public class ForestMapManager : MonoBehaviour {
                         Invoke("SpawnWolf2", 10);
                         currentPhase++;
                     }
+                */
                     break;
-                case 2:
+                case 2: // todo
                     fromFieldNum = 0;
-                    
+                    EnterMapStateTwo();
                     break;
                 case 3:
-                    if (Vector3.Distance(spawnedNPCs[2].transform.position, house.transform.position) < 12)
-                    {
-                        spawnedNPCs[2].GetComponent<SteeringBehavior>().target = house;
-                        SetArrive(spawnedNPCs[2]);
-                    }
-                    if (Vector3.Distance(spawnedNPCs[2].transform.position, house.transform.position) < 2)
-                    {
-                        spawnedNPCs[2].GetComponent<NPCController>().DestroyPoints();
-                        spawnedNPCs[2].GetComponent<NPCController>().label.enabled = false;
-                        spawnedNPCs[2].SetActive(false);
-                    }
-                    if (Vector3.Distance(spawnedNPCs[3].transform.position, house.transform.position) < 12)
-                    {
-                        SetArrive(spawnedNPCs[3]);
-                    }
-                    if (Vector3.Distance(spawnedNPCs[3].transform.position, house.transform.position) < 2)
-                    {
-                        spawnedNPCs[3].GetComponent<NPCController>().DestroyPoints();
-                        spawnedNPCs[3].GetComponent<NPCController>().label.enabled = false;
-                        spawnedNPCs[3].SetActive(false);
-                    }
-                    if (spawnedNPCs.Count > 4 && Vector3.Distance(spawnedNPCs[4].transform.position, house.transform.position) < 12)
-                    {
-                        SetArrive(spawnedNPCs[4]);
-                    }
-                    if (spawnedNPCs.Count > 4 && Vector3.Distance(spawnedNPCs[4].transform.position, house.transform.position) < 2)
-                    {
-                        spawnedNPCs[4].GetComponent<NPCController>().DestroyPoints();
-                        spawnedNPCs[4].GetComponent<NPCController>().label.enabled = false;
-                        spawnedNPCs[4].SetActive(false);
-                        Invoke("End", 5);
-                    }
-                    break;
+                    PlayerPrefab.gameObject.SetActive(false);
+                    if(!inPhase) narrator.text = "Press S to start Part 3: Raycasting for Obstacle Avoidance";
+               
+                break;
             }
+            
     }
 
-
-    private void EnterMapStateZero()
+    /* function that restarts the current presentation */
+    private void Restart() {
+        line = GetComponent<LineRenderer>();
+        foreach (GameObject npc in spawnedNPCs) {
+            Destroy(npc);
+        }
+        spawnedNPCs.Clear();
+        ClearPaths();
+        line.positionCount = 0;
+        
+    }
+    private void ClearPaths() {
+        line = GetComponent<LineRenderer>();
+        line.positionCount = 0;
+    }
+        private void EnterMapStateZero()
     {
-        narrator.text = "In Phase Zero, we're going to ...";
+       // narrator.text = "In Phase Zero, we're going to ...";
 
         //currentPhase = 2; // or whatever. Won't necessarily advance the phase every time
 
@@ -229,7 +226,9 @@ public class ForestMapManager : MonoBehaviour {
     }
 
     private void EnterMapStateOne() {
-        narrator.text = "In Phase One, we're going to ...";
+        FieldMapManager.fromForestNum = 1;
+        SceneManager.LoadScene("Field", 0);
+        // narrator.text = "In Phase One, we're going to ...";
 
         //currentPhase = 2; // or whatever. Won't necessarily advance the phase every time
 
@@ -238,18 +237,66 @@ public class ForestMapManager : MonoBehaviour {
 
     private void EnterMapStateTwo()
     {
-        narrator.text = "Entering Phase Two";
+        FieldMapManager.fromForestNum = 2;
+        SceneManager.LoadScene("Field", 0);
+        // narrator.text = "Entering Phase Two";
 
-        currentPhase = 3; // or whatever. Won't necessarily advance the phase every time
+        // currentPhase = 3; // or whatever. Won't necessarily advance the phase every time
 
         //spawnedNPCs.Add(SpawnItem(spawner2, WolfPrefab, null, SpawnText2, 4));
     }
 
     private void EnterMapStateThree()
     {
-        narrator.text = "Entering Phase Three";
+        inPhase = true;
+        PlayerPrefab.SetActive(false);
+        narrator.text = "This is a demonstration of pathfinding with raycasting for obstacle avoidance. Press S to" +
+           " restart or 2 or 3 to transition to the field demonstrations.";
+        narrator.resizeTextForBestFit = true;
+        CreatePath();
+       
+        numBoids = 6;
+        List<GameObject> theFlock = new List<GameObject>();
+        GameObject tempLead;
+        tempLead = SpawnItem(spawner4, WolfPrefab, null, SpawnText2, 3);
+        spawnedNPCs.Add(tempLead);
+        spawnedNPCs[0].GetComponent<MeshRenderer>().material.SetColor("_Color", Color.white);
+        spawnedNPCs[0].GetComponent<SteeringBehavior>().setPath(Path);
+        spawnedNPCs[0].GetComponent<SteeringBehavior>().part3 = true;
+        
+        for (int i = 0; i < numBoids; i++) {
+            if(i == 0) {
+                spawnedNPCs[i].GetComponent<SteeringBehavior>().neighbourDistance = 2f;
+                theFlock.Add(spawnedNPCs[i]);
 
-        currentPhase = 2; // or whatever. Won't necessarily advance the phase every time
+            } else {
+                GameObject temp = SpawnItem(spawner5, WolfPrefab, spawnedNPCs[0].GetComponent<NPCController>(), SpawnText1, 5);
+                spawnedNPCs.Add(temp);
+                spawnedNPCs[i].GetComponent<SteeringBehavior>().neighbourDistance = 2.5f;
+                theFlock.Add(temp);
+            }
+           
+        }
+        for (int i = 0; i < spawnedNPCs.Count; i++) {
+ 
+            spawnedNPCs[i].GetComponent<SteeringBehavior>().SetFlock(theFlock);
+        }
+
+
+        /*
+        CreatePath();
+        for(int i = 0; i < numBoids; i++) {
+            GameObject temp;
+            temp = SpawnItem(spawner4, WolfPrefab, null, SpawnText2, 0);
+            spawnedNPCs.Add(temp);
+        }
+        for(int i = 0; i < numBoids; i++) {
+            spawnedNPCs[i].GetComponent<SteeringBehavior>().follower = spawnedNPCs[0].GetComponent<SteeringBehavior>().agent;
+            spawnedNPCs[i].GetComponent<SteeringBehavior>().setPath(Path);
+            spawnedNPCs[i].GetComponent<NPCController>().phase = 3;
+        }
+        */
+        // currentPhase = 2; // or whatever. Won't necessarily advance the phase every time
 
         //spawnedNPCs.Add(SpawnItem(spawner2, WolfPrefab, null, SpawnText2, 4));
     }
@@ -375,7 +422,11 @@ public class ForestMapManager : MonoBehaviour {
 
     private void CreatePath()
     {
+        Color green = Color.green;
         line = GetComponent<LineRenderer>();
+        line.material = new Material(Shader.Find("Sprites/Default"));
+        line.startColor = green;
+        line.endColor = green;
         line.positionCount = Path.Length;
         for (int i = 0; i < Path.Length; i++)
         {
